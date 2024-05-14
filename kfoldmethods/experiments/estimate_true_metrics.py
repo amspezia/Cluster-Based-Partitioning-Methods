@@ -93,9 +93,9 @@ class TrueMetricsEstimate:
             
             accuracy = accuracy_score(y_test, y_pred)
             balanced_acc = balanced_accuracy_score(y_test, y_pred)
-            precision = precision_score(y_test, y_pred, average='macro')
-            recall = recall_score(y_test, y_pred, average='macro')
-            f1 = f1_score(y_test, y_pred, average='macro')
+            precision = precision_score(y_test, y_pred, average='macro', zero_division=0)
+            recall = recall_score(y_test, y_pred, average='macro', zero_division=0)
+            f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
             metric_results = [
                 ('accuracy', accuracy), ('precision', precision), ('recall', recall),
                 ('f1', f1), ('balanced_accuracy', balanced_acc)
@@ -189,7 +189,7 @@ def table_results(path_true_estimate_metrics: str, path_outputs: Path):
             
             for ds_name in df_run['ds_name'].unique():
                 groups = df_run[df_run['ds_name'] == ds_name].groupby(by=['metric_name', 'classifier_name'])
-                results = groups.agg(mean=('metric_result', np.mean)).transpose().rename(index={'mean': ds_name})
+                results = groups.agg(mean=('metric_result', 'mean')).transpose().rename(index={'mean': ds_name})
                 df_summary = pd.concat((df_summary, results), axis=0)
             
         df_summary.rename(
@@ -212,7 +212,7 @@ def table_results(path_true_estimate_metrics: str, path_outputs: Path):
             
             for ds_name in df_run['ds_name'].unique():
                 groups = df_run[df_run['ds_name'] == ds_name].groupby(by=['metric_name', 'classifier_name'])
-                results = groups.agg(std=('metric_result', np.std)).transpose().rename(index={'std': ds_name})
+                results = groups.agg(std=('metric_result', 'std')).transpose().rename(index={'std': ds_name})
                 df_summary = pd.concat((df_summary, results), axis=0)
             
         df_summary.rename(
@@ -254,7 +254,7 @@ def analyze(args):
 
         df_true_estimates_summary = df_true_estimates.groupby(
             by=['ds_name', 'classifier_name', 'metric_name']).agg(
-                true_value=('metric_result', np.mean))
+                true_value=('metric_result', 'mean'))
         df_true_estimates_summary.to_csv(
             configs.true_estimates__output_summary, float_format='%.4f')
 

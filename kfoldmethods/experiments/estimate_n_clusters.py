@@ -90,9 +90,9 @@ def analyze(args):
     summary = results_df.groupby(by=['ds_name']).agg(
         sample_size=('sample_size', lambda x: np.unique(x)[0]),
         n_iters=('iter', lambda x: np.max(x) + 1), 
-        n_clusters_estimate=('n_clusters', np.mean),
-        n_clusters_std=('n_clusters', np.std),
-        execution_time=('execution_time', np.sum))
+        n_clusters_estimate=('n_clusters', 'mean'),
+        n_clusters_std=('n_clusters', 'std'),
+        execution_time=('execution_time', 'sum'))
     
     path_n_clusters_estimate_summary = path_outputs / 'estimate_n_clusters.csv'
     summary.to_csv(path_n_clusters_estimate_summary, float_format='%.4f')

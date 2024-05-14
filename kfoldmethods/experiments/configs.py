@@ -8,7 +8,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 from kfoldmethods.datasets.pmlb_api import pmlb_get_ds_list
-from kfoldmethods.splitters import CBDSCV, DBSVC, DOBSCV
+from kfoldmethods.splitters import CBDSCV, SCBDSCV, DBSVC, DOBSCV
 
 
 run_data_dir = 'results_bracis22'
@@ -80,10 +80,14 @@ splitter_methods = [
         'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
     ('CBDSCV_Mini', CBDSCV.CBDSCVSplitter, {
         'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
+    ('SCBDSCV', SCBDSCV.SCBDSCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
+    ('SCBDSCV_Mini', SCBDSCV.SCBDSCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
     ('StratifiedKFold', StratifiedKFold, {
         'shuffle': True, 'random_state': 123}),
     ('KFold', KFold, {
         'shuffle': True, 'random_state': 123}),
 ]
 
-need_n_clusters = ['CBDSCV', 'CBDSCV_Mini']
+need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini']

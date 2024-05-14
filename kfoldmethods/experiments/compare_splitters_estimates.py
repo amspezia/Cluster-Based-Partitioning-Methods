@@ -114,9 +114,9 @@ class CompareSplittersEstimates:
     def _compute_metrics(self, y_test, y_pred):
         accuracy = accuracy_score(y_test, y_pred)
         balanced_accuracy = balanced_accuracy_score(y_test, y_pred)
-        precision = precision_score(y_test, y_pred, average='macro')
-        recall = recall_score(y_test, y_pred, average='macro')
-        f1 = f1_score(y_test, y_pred, average='macro')
+        precision = precision_score(y_test, y_pred, average='macro', zero_division=0)
+        recall = recall_score(y_test, y_pred, average='macro', zero_division=0)
+        f1 = f1_score(y_test, y_pred, average='macro', zero_division=0)
 
         metric_results = [
             ('accuracy', accuracy), ('precision', precision), 
@@ -207,7 +207,7 @@ def analyze(args):
     if analyze_running_time:
         df_rt = pd.read_csv(path_run / 'running_time_df.csv')
         summary_rt = df_rt.groupby(by=['dataset_name', 'splitter_method','n_splits']).agg(
-            running_time=('running_time', np.mean)).reset_index()
+            running_time=('running_time', 'mean')).reset_index()
 
         summary_rt = summary_rt.pivot(
             index='dataset_name', columns=['splitter_method', 'n_splits'], values='running_time')
@@ -220,12 +220,12 @@ def analyze(args):
         df_m = pd.read_csv(path_run / 'metrics_df.csv')
         df_estimates = df_m.groupby(
             by=['dataset_name', 'classifier_name', 'splitter_method', 'repeat_id', 'n_splits', 'metric_name']).agg(
-                estimate=('metric_value', np.mean))
+                estimate=('metric_value', 'mean'))
         df_estimates.to_csv(path_run / 'splitters_estimate.csv', float_format='%.5f')
 
         df_estimates_summary = df_estimates.groupby(
             by=['dataset_name', 'classifier_name', 'splitter_method', 'n_splits', 'metric_name']).agg(
-                expected_estimate=('estimate', np.mean), estimate_std=('estimate', np.std))
+                expected_estimate=('estimate', 'mean'), estimate_std=('estimate', 'std'))
         df_estimates_summary.to_csv(path_run / 'splitters_estimate_summary.csv', float_format='%.5f')
 
         df_estimates_summary.reset_index(inplace=True)
