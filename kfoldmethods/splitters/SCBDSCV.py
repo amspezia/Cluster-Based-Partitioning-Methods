@@ -17,30 +17,27 @@ def SCBDSCV(X, y, k_splits, k_clusters, rng=None, minibatch_kmeans=False):
     if k_clusters == None:
         k_clusters = k_splits
 
-    X, y = sort_by_label(X, y)
-    
+    X, y = sort_by_label(X, y) 
     slicing_index, segment_shift, start_of_segment, end_of_segment = aux_indexes(y)
-
     X, y = data_slicing_by_label(X, y, slicing_index)
 
-    if minibatch_kmeans:
-        kmeans = MiniBatchKMeans(n_clusters=k_clusters, random_state=123)
-    else:
-        kmeans = KMeans(n_clusters=k_clusters)
+    index_list = []
 
-    for each_class in X:
+    if minibatch_kmeans:
+        kmeans = MiniBatchKMeans(n_clusters=k_clusters, random_state=rng)
+    else:
+        kmeans = KMeans(n_clusters=k_clusters, random_state=rng)
+    
+    for each_class in X: 
         X_new = kmeans.fit_transform(each_class) 
         cluster_index = np.argsort(X_new)
         cluster_index = [i[0] for i in cluster_index]
-
+        
         clusters = [[] for _ in range(k_clusters)]  # list with k clusters (empty)
-        i, size = 0, len(X_new)
-        while i < size:
+        for i in range(len(X_new)):
             element = (i, X_new[i][cluster_index[i]])
             clusters[cluster_index[i]].append(element)
-            i += 1
 
-        index_list = []
         dtype = [('index', int), ('distance', float)]
         for values in clusters:
             each_cluster = np.array(values, dtype=dtype)

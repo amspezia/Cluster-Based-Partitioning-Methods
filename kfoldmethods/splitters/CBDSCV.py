@@ -18,9 +18,9 @@ def CBDSCV(X, y, k_splits, k_clusters, rng=None, minibatch_kmeans=False):
         k_clusters = k_splits
 
     if minibatch_kmeans:
-        kmeans = MiniBatchKMeans(n_clusters=k_clusters, random_state=123)
+        kmeans = MiniBatchKMeans(n_clusters=k_clusters, random_state=rng)
     else:
-        kmeans = KMeans(n_clusters=k_clusters)
+        kmeans = KMeans(n_clusters=k_clusters, random_state=rng)
     X_new = kmeans.fit_transform(X)  # does not allow to choose the metric for distance
     cluster_index = np.argsort(X_new)
     cluster_index = [i[0] for i in cluster_index]
@@ -110,4 +110,3 @@ class CBDSCVSplitter:
 
     def get_n_splits(self, X=None, y=None, groups=None):
         return self.n_splits
-

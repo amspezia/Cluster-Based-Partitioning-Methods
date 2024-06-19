@@ -15,7 +15,10 @@ path_rt_artifacts = Path(configs.compare_splitters__output) / "artifacts" /"runn
 
 def get_df_rt_10folds():
     df_rt = pd.read_csv(path_rt, header=[0, 1], skip_blank_lines=True, index_col=0)
-    df_rt.drop(columns=['ShuffleSplit', 'StratifiedShuffleSplit'], level=0, inplace=True)
+    if 'ShuffleSplit' in df_rt.columns:
+        df_rt.drop(columns=['ShuffleSplit'], level=0, inplace=True)
+    if 'StratifiedShuffleSplit' in df_rt.columns:
+        df_rt.drop(columns=['StratifiedShuffleSplit'], level=0, inplace=True)
     df_rt.drop(columns=["2", "5"], level=1, inplace=True)
     df_rt = df_rt.droplevel(1, axis=1)
     
@@ -51,12 +54,21 @@ def cluster_based__how_many_times_faster():
     df_rt = get_df_rt_10folds()
     df_rt.drop(inplace=True, columns=['KFold', 'StratifiedKFold'])
     df_rt.drop(inplace=True, columns=['DBSCV', 'DOBSCV'])
-    ratio = df_rt['CBDSCV'] / df_rt['CBDSCV_Mini']
+    
+    df_CBDSCV = df_rt.drop(columns=['SCBDSCV', 'SCBDSCV_Mini'])
+    ratio_CBDSCV = df_CBDSCV['CBDSCV'] / df_CBDSCV['CBDSCV_Mini']
 
     print("CBDSCV vs CBDSCV_Mini running times")
-    print(ratio)
-    print("Mean: {:.4f}".format(np.mean(ratio)))
-    
+    print(ratio_CBDSCV)
+    print("Mean CBDSCV: {:.4f}".format(np.mean(ratio_CBDSCV)))
+
+    df_SCBDSCV = df_rt#.drop(columns=['CBDSCV', 'CBDSCV_Mini'])
+    ratio_SCBDSCV = df_SCBDSCV['SCBDSCV'] / df_SCBDSCV['SCBDSCV_Mini']
+
+    print("SCBDSCV vs SCBDSCV_Mini running times")
+    print(ratio_SCBDSCV)
+    print("Mean SCBDSCV: {:.4f}".format(np.mean(ratio_SCBDSCV)))
+
 
 def plot_rt_distribution():
     sns.set_theme()
