@@ -8,7 +8,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 from kfoldmethods.datasets.pmlb_api import pmlb_get_ds_list
-from kfoldmethods.splitters import CBDSCV, SCBDSCV, DBSVC, DOBSCV
+from kfoldmethods.splitters import CBDSCV, SCBDSCV, DBSVC, DOBSCV, SPECTRAL
 
 
 run_data_dir = 'results_bracis22'
@@ -84,10 +84,12 @@ splitter_methods = [
         'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
     ('SCBDSCV_Mini', SCBDSCV.SCBDSCVSplitter, {
         'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
+    ('SPECTRAL', SPECTRAL.SPECTRALSplitter, {
+        'shuffle': True, 'random_state': 123}),
     ('StratifiedKFold', StratifiedKFold, {
         'shuffle': True, 'random_state': 123}),
     ('KFold', KFold, {
         'shuffle': True, 'random_state': 123}),
 ]
 
-need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini']
+need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'SPECTRAL']

@@ -53,7 +53,7 @@ def winners_running_time():
 def cluster_based__how_many_times_faster():
     df_rt = get_df_rt_10folds()
     df_rt.drop(inplace=True, columns=['KFold', 'StratifiedKFold'])
-    df_rt.drop(inplace=True, columns=['DBSCV', 'DOBSCV'])
+    df_rt.drop(inplace=True, columns=['DBSCV', 'DOBSCV', 'SPECTRAL'])
     
     df_CBDSCV = df_rt.drop(columns=['SCBDSCV', 'SCBDSCV_Mini'])
     ratio_CBDSCV = df_CBDSCV['CBDSCV'] / df_CBDSCV['CBDSCV_Mini']
