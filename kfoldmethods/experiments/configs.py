@@ -43,9 +43,11 @@ datasets = [
 datasets_balanced = [
     'analcatdata_germangss', 'chess',  'analcatdata_happiness', 'analcatdata_japansolvent', 'vote', 'colic', 'dna',
     'vowel', 'movement_libras', 'analcatdata_dmft']
+
 datasets_imb = [
     'allrep', 'appendicitis', 'page_blocks', 'new_thyroid', 'backache', 'flare', 'postoperative_patient_data',
     'hepatitis', 'analcatdata_cyyoung8092', 'car']
+
 dataset_info__output_dir = '%s/dataset_info' % run_data_dir
 dataset_info__pmlb_list_path = "kfoldmethods/datasets/pmlb_datasets.csv"
 
@@ -84,12 +86,14 @@ splitter_methods = [
         'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
     ('SCBDSCV_Mini', SCBDSCV.SCBDSCVSplitter, {
         'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
-    ('SPECTRAL', SPECTRAL.SPECTRALSplitter, {
-        'shuffle': True, 'random_state': 123}),
+    ('SPECTRAL_rbf', SPECTRAL.SPECTRALSplitter, {
+        'shuffle': True, 'affinity': 'rbf', 'random_state': 123}),
+    ('SPECTRAL_nn', SPECTRAL.SPECTRALSplitter, {
+        'shuffle': True, 'affinity': 'nearest_neighbors', 'random_state': 123}),
     ('StratifiedKFold', StratifiedKFold, {
         'shuffle': True, 'random_state': 123}),
     ('KFold', KFold, {
         'shuffle': True, 'random_state': 123}),
 ]
 
-need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'SPECTRAL']
+need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'SPECTRAL_rbf', 'SPECTRAL_nn']

@@ -4,6 +4,7 @@ from typing import Union
 import pandas as pd
 import numpy as np
 from scipy import stats
+from .configs import need_n_clusters
 
 from kfoldmethods.experiments import utils
 from kfoldmethods.experiments import configs
@@ -173,7 +174,7 @@ def apply_tests_by__clf(df: pd.DataFrame, metrics, n_splits_list, classifiers):
 
 def cluster_based_only():
     df = pd.read_csv(path_run / 'bias_variance_tradeoff.csv')
-    df = df[df['splitter_method'].str.contains('CBDSCV')]
+    df = df[df['splitter_method'].str.contains('|'.join(need_n_clusters))]
     metrics = ['accuracy', 'f1']
     n_splits_list = [2, 5, 10]
 

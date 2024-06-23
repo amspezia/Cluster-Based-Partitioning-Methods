@@ -3,10 +3,10 @@ from sklearn.utils import indexable, check_random_state, shuffle
 from sklearn.cluster import SpectralClustering
 import copy
 
-from .utils import circular_append
+from .utils import cluster_labels_to_folds
 
 
-def SPECTRAL(X, y, k_splits, k_clusters, rng=None):
+def SPECTRAL(X, y, k_splits, k_clusters, affinity, rng=None):
     if rng is None:
         rng = np.random.RandomState()
     
@@ -17,25 +17,16 @@ def SPECTRAL(X, y, k_splits, k_clusters, rng=None):
     if k_clusters == None:
         k_clusters = k_splits
 
-    spectral = SpectralClustering(n_clusters=k_clusters, random_state=rng)
+    spectral = SpectralClustering(n_clusters=k_clusters, affinity=affinity, random_state=rng)
     cluster_labels = spectral.fit_predict(X)  # does not allow to choose the metric for distance
     
-    clusters = [[] for _ in range(k_clusters)]  # list with k clusters (empty)
-    for i in range(len(cluster_labels)):
-        clusters[cluster_labels[i]].append(i)
-    
-    index_list = []
-    for list in clusters:
-        index_list.extend(list)
-
-    folds = [[] for _ in range(k_splits)]
-    folds = circular_append(index_list, folds, k_splits)
+    folds = cluster_labels_to_folds(cluster_labels, k_splits)
 
     return folds, k_splits, k_clusters
 
 
 class SPECTRALSplitter:
-    def __init__(self, n_splits=None, n_clusters = None, random_state=None, shuffle=True):
+    def __init__(self, n_splits=None, n_clusters=None, random_state=None, shuffle=True, affinity='rbf'):
         """Split dataset indices according to the SPECTRAL technique.
 
         Parameters
@@ -53,6 +44,7 @@ class SPECTRALSplitter:
         self.n_clusters = n_clusters
         self.random_state = random_state  # used for enabling the user to reproduce the results
         self.shuffle = shuffle
+        self.affinity = affinity
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data according to the DBSCV technique.
@@ -81,7 +73,7 @@ class SPECTRALSplitter:
             X, y = shuffle(X, y, random_state=rng)
 
         folds, self.n_splits, self.n_clusters = SPECTRAL(
-            X, y,self.n_splits, self.n_clusters, rng=rng)
+            X, y,self.n_splits, self.n_clusters, affinity=self.affinity, rng=rng)
         
         for k in range(self.n_splits):
             test_fold_index = self.n_splits - k - 1  # start by using the last fold as the test fold

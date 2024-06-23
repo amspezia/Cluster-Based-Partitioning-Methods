@@ -1,5 +1,5 @@
 import numpy as np
-
+from collections import defaultdict
 
 def sort_by_label(X, y):
     sorted_index = y.argsort()
@@ -15,6 +15,21 @@ def circular_append(input_list, output_list, k):
         else:
             i = 0
     return(output_list)
+
+
+def cluster_labels_to_folds(labels, k_splits):
+    cluster_indexes = defaultdict(int)
+    folds = [[] for _ in range(k_splits)]
+ 
+    for index in range(len(labels)):
+        cluster_i = labels[index]
+        folds[cluster_indexes[cluster_i]].append(index)
+        if cluster_indexes[cluster_i] < k_splits - 1:
+            cluster_indexes[cluster_i] += 1
+        else:
+            cluster_indexes[cluster_i] = 0
+   
+    return folds
 
 
 def data_slicing_by_label(X, y, indexes):
