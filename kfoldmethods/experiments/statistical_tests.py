@@ -176,7 +176,7 @@ def cluster_based_only():
     df = pd.read_csv(path_run / 'bias_variance_tradeoff.csv')
     df = df[df['splitter_method'].str.contains('|'.join(need_n_clusters))]
     metrics = ['accuracy', 'f1']
-    n_splits_list = [2, 5, 10]
+    n_splits_list = [2, 5, 10]  
 
     apply_tests_overall(df, metrics=metrics, n_splits_list=n_splits_list, subdir=Path('cluster_based'))
 
