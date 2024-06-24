@@ -95,7 +95,7 @@ splitter_methods = [
     ('StratifiedKFold', StratifiedKFold, {
         'shuffle': True, 'random_state': 123}),
     ('KFold', KFold, {
-        'shuffle': True, 'random_state': 123}),
+        'shuffle': True, 'random_state': 123})
 ]
 
 need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'SPECTRAL_rbf', 'SPECTRAL_nn', 'ACBCV']

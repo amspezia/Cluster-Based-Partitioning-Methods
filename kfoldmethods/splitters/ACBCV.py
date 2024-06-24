@@ -1,9 +1,10 @@
 import numpy as np
 from sklearn.utils import indexable, check_random_state, shuffle
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.metrics import pairwise_distances_argmin_min
 import copy
 
-from .utils import cluster_labels_to_folds
+from .utils import circular_append
 
 
 def ACBCV(X, y, k_splits, k_clusters):    
@@ -14,10 +15,26 @@ def ACBCV(X, y, k_splits, k_clusters):
     if k_clusters == None:
         k_clusters = k_splits
 
-    ACBCV = AgglomerativeClustering(n_clusters=k_clusters)
-    cluster_labels = ACBCV.fit_predict(X)  # does not allow to choose the metric for distance
-    
-    folds = cluster_labels_to_folds(cluster_labels, k_splits)
+    agg_clustering = AgglomerativeClustering(n_clusters=k_clusters)
+    labels = agg_clustering.fit_predict(X)
+
+    # Calculate the centroids of the clusters
+    centroids = np.array([X[labels == i].mean(axis=0) for i in range(agg_clustering.n_clusters)])
+
+    # Calculate the distances from each point to the nearest cluster center
+    _, distances = pairwise_distances_argmin_min(X, centroids)
+
+    clusters = [[] for _ in range(agg_clustering.n_clusters)]
+    for index in range(len(labels)):
+        clusters[labels[index]].append((index, distances[index]))
+
+    index_list = []
+    for cluster in clusters:
+        cluster.sort(key=lambda x: x[1])
+        index_list.extend(item[0] for item in cluster)
+
+    folds = [[] for _ in range(k_splits)]
+    folds = circular_append(index_list, folds, k_splits)
 
     return folds, k_splits, k_clusters
 
