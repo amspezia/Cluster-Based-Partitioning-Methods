@@ -1,7 +1,7 @@
 import argparse
 
 from kfoldmethods.experiments import tune_classifiers, \
-    estimate_true_metrics, estimate_n_clusters, compare_splitters_estimates, datasets_info
+    estimate_true_metrics, estimate_clustering_parameters, compare_splitters_estimates, datasets_info
 
 
 def build_compare_splitters_subparser(subparsers):
@@ -35,11 +35,11 @@ def build_estimate_true_metrics_subparsers(subparsers):
     return parser_true_estimate
 
 
-def build_estimate_n_clusters_subparsers(subparsers):
-    parser_n_clusters_estimate = subparsers.add_parser('n-clusters-estimate', help='Estimate number of clusters in each dataset.')
-    parser_n_clusters_estimate.add_argument("-a", "--analyze", action="store_true", help="Analyze results of run")
+def build_estimate_clustering_parameters_subparsers(subparsers):
+    parser_estimate_clustering_parameters = subparsers.add_parser('estimate-clustering-parameters', help='Estimate clustering parameters in each dataset.')
+    parser_estimate_clustering_parameters.add_argument("-a", "--analyze", action="store_true", help="Analyze results of run")
 
-    return parser_n_clusters_estimate
+    return parser_estimate_clustering_parameters
 
 
 def build_datasets_info_subparsers(subparsers):
@@ -54,7 +54,7 @@ def main():
     parser_experiment = build_compare_splitters_subparser(subparsers)
     parser_hp = build_hyperparameters_search_subparsers(subparsers)
     parser_true_estimate = build_estimate_true_metrics_subparsers(subparsers)
-    parser_n_clusters_estimate = build_estimate_n_clusters_subparsers(subparsers)
+    parser_estimate_clustering_parameters = build_estimate_clustering_parameters_subparsers(subparsers)
     parser_ds_info = build_datasets_info_subparsers(subparsers)
 
     args = parser.parse_args()
@@ -71,8 +71,8 @@ def main():
         estimate_true_metrics.main(args)
         return
 
-    if args.subparser_name == "n-clusters-estimate":
-        estimate_n_clusters.main(args)
+    if args.subparser_name == "estimate-clustering-parameters":
+        estimate_clustering_parameters.main(args)
         return
 
     if args.subparser_name == "datasets-info":

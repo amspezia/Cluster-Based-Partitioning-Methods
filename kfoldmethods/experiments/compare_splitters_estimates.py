@@ -126,7 +126,7 @@ class CompareSplittersEstimates:
 
     def _compare_splitters(self, ds_name, clf_name):
         X, y = fetch_data(ds_name, return_X_y=True)
-        df_n_clusters = pd.read_csv(configs.compare_splitters__path_n_clusters)
+        df_clustering_parameters = pd.read_csv(configs.compare_splitters__path_clustering_parameters)
 
         for splitter_name, splitter_class, splitter_params in configs.splitter_methods:
             print("-- Running {}".format(splitter_name))
@@ -145,11 +145,19 @@ class CompareSplittersEstimates:
                     splitter_params['n_splits'] = n_splits
 
                     if splitter_name in configs.need_n_clusters:
-                        n_clusters = round(df_n_clusters.loc[
-                            df_n_clusters['ds_name'] == ds_name, 'n_clusters_estimate'].values[0])
+                        n_clusters = round(df_clustering_parameters.loc[
+                            df_clustering_parameters['ds_name'] == ds_name, 'n_clusters_estimate'].values[0])
                         print("---- Using {} clusters".format(n_clusters))
 
                         splitter_params['n_clusters'] = n_clusters
+                    
+                    if 'DBSCAN' in splitter_name:
+                        eps = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'eps'].values[0]
+                        min_samples = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'min_samples'].values[0]
+                        print("---- Using eps={} min_samples={}".format(eps, min_samples))
+
+                        splitter_params['eps'] = eps
+                        splitter_params['min_samples'] = min_samples
 
                     split_start = time.perf_counter()
                     splitter = splitter_class(**splitter_params)

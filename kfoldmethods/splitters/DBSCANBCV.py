@@ -1,32 +1,51 @@
 import numpy as np
 from sklearn.utils import indexable, check_random_state, shuffle
-from sklearn.cluster import SpectralClustering
+from sklearn.cluster import DBSCAN
+from sklearn.metrics import pairwise_distances_argmin_min
 import copy
 
-from .utils import cluster_labels_to_folds
-
-def SPECTRAL(X, y, k_splits, k_clusters, assign_labels, rng=None):
-    if rng is None:
-        rng = np.random.RandomState()
-    
-    if k_splits == None and k_clusters == None:
-        k_splits = len(np.unique(y))  # extrating k, the k that will be used on clustering, from y
-        k_clusters = k_splits
-
-    if k_clusters == None:
-        k_clusters = k_splits
-
-    spectral = SpectralClustering(n_clusters=k_clusters, assign_labels=assign_labels, random_state=rng)
-    cluster_labels = spectral.fit_predict(X)  # does not allow to choose the metric for distance
-    
-    folds = cluster_labels_to_folds(cluster_labels, k_splits)
-
-    return folds, k_splits, k_clusters
+from .utils import circular_append
 
 
-class SPECTRALSplitter:
-    def __init__(self, n_splits=None, n_clusters=None, random_state=None, shuffle=True, assign_labels='kmeans'):
-        """Split dataset indices according to the SPECTRAL technique.
+def DBSCANBCV(X, y, k_splits, eps, min_samples):    
+    if k_splits == None:
+        k_splits = len(np.unique(y)) if y is not None else 2
+    np.set_printoptions(threshold=np.inf)
+    print(f'Eps:{eps} min_samples:{min_samples}')
+    print('X:', k_splits)
+    print(X)
+    dbscan = DBSCAN(eps=eps, min_samples=int(min_samples))
+    labels = dbscan.fit_predict(X)
+    n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+
+    print('Labels: ' + str(n_clusters))
+    print(labels)
+    # Calculate the centroids of the clusters
+    centroids = np.array([X[labels == i].mean(axis=0) for i in range(n_clusters)])
+
+    # Calculate the distances from each point to the nearest cluster center
+    _, distances = pairwise_distances_argmin_min(X, centroids)
+
+    clusters = [[] for _ in range(n_clusters)]
+    for index in range(len(labels)):
+        clusters[labels[index]].append((index, distances[index]))
+
+    index_list = []
+    for cluster in clusters:
+        cluster.sort(key=lambda x: x[1])
+        index_list.extend(item[0] for item in cluster)
+
+    folds = [[] for _ in range(k_splits)]
+    folds = circular_append(index_list, folds, k_splits)
+    print('Folds: ')
+    print(folds)
+
+    return folds, k_splits, n_clusters
+
+
+class DBSCANBCVSplitter:
+    def __init__(self, n_splits=None, n_clusters=None, random_state=None, shuffle=True, eps=0.5, min_samples=5):
+        """Split dataset indices according to the DBSCAN technique.
 
         Parameters
         ----------
@@ -43,7 +62,8 @@ class SPECTRALSplitter:
         self.n_clusters = n_clusters
         self.random_state = random_state  # used for enabling the user to reproduce the results
         self.shuffle = shuffle
-        self.assign_labels = assign_labels
+        self.eps = eps
+        self.min_samples = min_samples
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data according to the DBSCV technique.
@@ -71,8 +91,8 @@ class SPECTRALSplitter:
         if self.shuffle:
             X, y = shuffle(X, y, random_state=rng)
 
-        folds, self.n_splits, self.n_clusters = SPECTRAL(
-            X, y,self.n_splits, self.n_clusters, assign_labels=self.assign_labels, rng=rng)
+        folds, self.n_splits, self.n_clusters = DBSCANBCV(
+            X, y,self.n_splits, self.eps, self.min_samples)
         
         for k in range(self.n_splits):
             test_fold_index = self.n_splits - k - 1  # start by using the last fold as the test fold
