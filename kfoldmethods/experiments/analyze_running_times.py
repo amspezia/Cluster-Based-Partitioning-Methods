@@ -13,15 +13,19 @@ path_rt = Path(configs.compare_splitters__output) / "outputs" / "summary_running
 path_rt_artifacts = Path(configs.compare_splitters__output) / "artifacts" /"running_time"
 
 
-def get_df_rt_10folds():
+def get_df_rt_10folds(dataset_names=None):
     df_rt = pd.read_csv(path_rt, header=[0, 1], skip_blank_lines=True, index_col=0)
     if 'ShuffleSplit' in df_rt.columns:
         df_rt.drop(columns=['ShuffleSplit'], level=0, inplace=True)
     if 'StratifiedShuffleSplit' in df_rt.columns:
         df_rt.drop(columns=['StratifiedShuffleSplit'], level=0, inplace=True)
-    df_rt.drop(columns=["2", "5"], level=1, inplace=True)
+    df_rt.drop(columns=["2"], level=1, inplace=True)
     df_rt = df_rt.droplevel(1, axis=1)
     
+    # Filter by dataset names if provided
+    if dataset_names:
+        df_rt = df_rt[dataset_names]
+        
     return df_rt
 
 
@@ -75,15 +79,17 @@ def cluster_based__how_many_times_faster():
 
 def plot_rt_distribution():
     sns.set_theme()
-    df_rt = get_df_rt_10folds()
+    
+    for experiment, datasets in configs.experiments.items():
+        df_rt = get_df_rt_10folds(datasets)
 
-    fig, ax = plt.subplots()
-    sns.stripplot(data=df_rt, ax=ax, orient='h')
-    ax.set_ylabel("Splitter")
-    ax.set_xlabel("Running time (s)")
-    fig.tight_layout()
-
-    savefig(fig, "running_times", path_rt_artifacts)
+        fig, ax = plt.subplots()
+        sns.stripplot(data=df_rt, ax=ax, orient='h')
+        ax.set_ylabel("Splitter")
+        ax.set_xlabel("Running time (s)")
+        fig.tight_layout()
+        
+        savefig(fig, f"running_times_{experiment}", path_rt_artifacts)
     
 
 def analyze():

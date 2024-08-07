@@ -192,5 +192,5 @@ def analyze():
     n_splits_list = [2, 5, 10]
     ds_balances = ['balanced', 'imbalanced']
 
-    apply_tests_by__balance(df, metrics, n_splits_list, ds_balances)
-    cluster_based_only()
+    #apply_tests_by__balance(df, metrics, n_splits_list, ds_balances)
+    #cluster_based_only()

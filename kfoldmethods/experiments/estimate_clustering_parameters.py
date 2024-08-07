@@ -13,7 +13,7 @@ from kneebow.rotor import Rotor
 from sklearn.neighbors import NearestNeighbors
 from kneed import KneeLocator
 
-def find_suitable_eps(data, n_neighbors=4):
+def find_suitable_eps(data, n_neighbors=4, ds_name=''):
     # Step 1: Calculate distances
     neighbors = NearestNeighbors(n_neighbors=n_neighbors)
     neighbors_fit = neighbors.fit(data)
@@ -34,7 +34,7 @@ def find_suitable_eps(data, n_neighbors=4):
         plt.scatter(kneedle.elbow, suitable_eps, color='red')  # Mark the elbow point
     plt.xlabel('Points sorted by distance')
     plt.ylabel('Distance to nearest neighbor')
-    plt.title('Elbow Method for Finding Suitable Eps')
+    plt.title(f'Elbow Method for Finding Suitable Eps {ds_name}')
     plt.show()
     
     return suitable_eps
@@ -80,17 +80,13 @@ class ClusteringParametersEstimate:
                 print("Estimating number of clusters for dataset {}".format(ds_name))
                 self.estimate_clustering_parameters_dataset(ds_name)
 
-                #if any('DBSCAN' in splitter for splitter in configs.splitter_methods):
-                #    print("Estimating parameters of DBSCAN for dataset {}".format(ds_name))
-                #    self.estimate_dbscan_parameters(ds_name)
-
                 joblib.dump(self.results, self.path_results)
 
     def estimate_clustering_parameters_dataset(self, ds_name):
         X, y = fetch_data(ds_name, return_X_y=True)
         
         min_samples = max(2, X.shape[1] * 2 - 1) 
-        eps = find_suitable_eps(X, min_samples)
+        eps = find_suitable_eps(X, min_samples, ds_name)
         print(f"Estimated parameters of DBSCAN for dataset {ds_name}: eps={eps} min_samples={min_samples}")
 
         sample_size = min(100, X.shape[0] - 1)

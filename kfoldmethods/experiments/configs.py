@@ -7,7 +7,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 from kfoldmethods.datasets.pmlb_api import pmlb_get_ds_list
-from kfoldmethods.splitters import CBDSCV, SCBDSCV, DBSVC, DOBSCV, SPECTRAL, ACBCV, DBSCANBCV
+from kfoldmethods.splitters import CBDSCV, SCBDSCV, DBSVC, DOBSCV, SPECTRAL, ACBCV, DBSCANBCV, ROCBCV
 
 
 run_data_dir = 'results_bracis22'
@@ -33,6 +33,9 @@ tuning_grid_seach_n_jobs = n_jobs
 tuning_grid_search_scoring = 'balanced_accuracy'
 classifier_hyperparameters_output = "%s/classifier_hyperparameters" % run_data_dir
 
+"""
+Old datasets
+
 datasets = [
     'analcatdata_germangss', 'chess', 'analcatdata_happiness', 'analcatdata_japansolvent', 'vote', 'colic', 'dna',
     'vowel', 'movement_libras', 'analcatdata_dmft', 'allrep', 'appendicitis', 'page_blocks', 
@@ -46,6 +49,14 @@ datasets_balanced = [
 datasets_imb = [
     'allrep', 'appendicitis', 'page_blocks', 'new_thyroid', 'backache', 'flare', 'postoperative_patient_data',
     'hepatitis', 'analcatdata_cyyoung8092', 'car']
+"""
+
+datasets = ['cloud', 'iris', 'analcatdata_germangss', 'movement_libras', 'sonar', 'vowel', 'contraceptive', 'splice', 'waveform_21', 'optdigits',
+            'analcatdata_cyyoung9302', 'appendicitis', 'backache', 'spect', 'new_thyroid', 'wine_quality_red', 'car',  'dis', 'churn', 'ann_thyroid']
+
+datasets_balanced = ['cloud', 'iris', 'analcatdata_germangss', 'movement_libras', 'sonar', 'vowel', 'contraceptive', 'splice', 'waveform_21', 'optdigits']
+
+datasets_imb = ['analcatdata_cyyoung9302', 'appendicitis', 'backache', 'spect', 'new_thyroid', 'wine_quality_red', 'car',  'dis', 'churn', 'ann_thyroid']
 
 dataset_info__output_dir = '%s/dataset_info' % run_data_dir
 dataset_info__pmlb_list_path = "kfoldmethods/datasets/pmlb_datasets.csv"
@@ -91,19 +102,18 @@ splitter_methods = [
         'shuffle': True, 'random_state': 123}),
     ('DBSCANBCV', DBSCANBCV.DBSCANBCVSplitter, {
         'shuffle': True, 'random_state': 123}),
+    ('ROCBCV', ROCBCV.ROCBCVSplitter, {
+        'shuffle': True, 'random_state': 123}),
     ('StratifiedKFold', StratifiedKFold, {
         'shuffle': True, 'random_state': 123}),
     ('KFold', KFold, {
         'shuffle': True, 'random_state': 123})
 ]
 
-splitter_methods = [
-    ('CBDSCV', CBDSCV.CBDSCVSplitter, {
-        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
-    ('DBSCANBCV', DBSCANBCV.DBSCANBCVSplitter, {
-        'shuffle': True, 'random_state': 123}),
-    ('ACBCV', ACBCV.ACBCVSplitter, {
-        'shuffle': True, 'random_state': 123})
-]
+experiments = {
+    'experiment_1': ['StratifiedKFold', 'SCBDSCV', 'SCBDSCV_Mini', 'CBDSCV', 'CBDSCV_Mini'],
+    'experiment_2': ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'ACBCV', 'DBSCANBCV'],
+    'experiment_3': ['CBDSCV', 'SCBDSCV', 'ROCBCV']
+}
 
 need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'SPECTRAL_kmeans', 'SPECTRAL_clusterqr', 'ACBCV']

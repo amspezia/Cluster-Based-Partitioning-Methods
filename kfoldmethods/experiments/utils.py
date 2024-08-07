@@ -123,21 +123,23 @@ def _compare_plot_balance(df, output_dir):
             continue
         print(g_name)
 
-        g_balanced = g.loc[g['dataset_name'].isin(configs.datasets_balanced), :]
-        _plot_distributions(g_balanced, output_dir, g_name, 'bias', balanced=True, colored_by=None)
-        _plot_distributions(g_balanced, output_dir, g_name, 'bias', balanced=True, colored_by='classifier_name')
-        _plot_distributions(g_balanced, output_dir, g_name, 'bias', balanced=True, colored_by='dataset_name')
-        _plot_distributions(g_balanced, output_dir, g_name, 'estimate_std', balanced=True, colored_by=None)
-        _plot_distributions(g_balanced, output_dir, g_name, 'estimate_std', balanced=True, colored_by='classifier_name')
-        _plot_distributions(g_balanced, output_dir, g_name, 'estimate_std', balanced=True, colored_by='dataset_name')
+        if g_name[0] == 'accuracy':
+            g_balanced = g.loc[g['dataset_name'].isin(configs.datasets_balanced), :]
+            _plot_distributions(g_balanced, output_dir, g_name, 'bias', balanced=True, colored_by=None)
+            _plot_distributions(g_balanced, output_dir, g_name, 'bias', balanced=True, colored_by='classifier_name')
+            _plot_distributions(g_balanced, output_dir, g_name, 'bias', balanced=True, colored_by='dataset_name')
+            _plot_distributions(g_balanced, output_dir, g_name, 'estimate_std', balanced=True, colored_by=None)
+            _plot_distributions(g_balanced, output_dir, g_name, 'estimate_std', balanced=True, colored_by='classifier_name')
+            _plot_distributions(g_balanced, output_dir, g_name, 'estimate_std', balanced=True, colored_by='dataset_name')
 
-        g_imbalanced = g.loc[g['dataset_name'].isin(configs.datasets_imb), :]
-        _plot_distributions(g_imbalanced, output_dir, g_name, 'bias', balanced=False, colored_by=None)
-        _plot_distributions(g_imbalanced, output_dir, g_name, 'bias', balanced=False, colored_by='classifier_name')
-        _plot_distributions(g_imbalanced, output_dir, g_name, 'bias', balanced=False, colored_by='dataset_name')
-        _plot_distributions(g_imbalanced, output_dir, g_name, 'estimate_std', balanced=False, colored_by=None)
-        _plot_distributions(g_imbalanced, output_dir, g_name, 'estimate_std', balanced=False, colored_by='classifier_name')
-        _plot_distributions(g_imbalanced, output_dir, g_name, 'estimate_std', balanced=False, colored_by='dataset_name')
+        if g_name[0] == 'f1':
+            g_imbalanced = g.loc[g['dataset_name'].isin(configs.datasets_imb), :]
+            _plot_distributions(g_imbalanced, output_dir, g_name, 'bias', balanced=False, colored_by=None)
+            _plot_distributions(g_imbalanced, output_dir, g_name, 'bias', balanced=False, colored_by='classifier_name')
+            _plot_distributions(g_imbalanced, output_dir, g_name, 'bias', balanced=False, colored_by='dataset_name')
+            _plot_distributions(g_imbalanced, output_dir, g_name, 'estimate_std', balanced=False, colored_by=None)
+            _plot_distributions(g_imbalanced, output_dir, g_name, 'estimate_std', balanced=False, colored_by='classifier_name')
+            _plot_distributions(g_imbalanced, output_dir, g_name, 'estimate_std', balanced=False, colored_by='dataset_name')
         
         # color: clf
         # fig, ax = plt.subplots()

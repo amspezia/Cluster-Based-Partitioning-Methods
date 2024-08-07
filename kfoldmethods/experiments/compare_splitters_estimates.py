@@ -97,10 +97,11 @@ class CompareSplittersEstimatesResults:
 
 
 class CompareSplittersEstimates:
-    def __init__(self, output_dir=None, ds_idx_0=None, ds_idx_last=None):
+    def __init__(self, output_dir=None, ds_idx_0=None, ds_idx_last=None, splitter=''):
         self.results = CompareSplittersEstimatesResults()
         self.ds_idx_0 = ds_idx_0 if ds_idx_0 is not None else 0
         self.ds_idx_last = ds_idx_last if ds_idx_last is not None else len(configs.datasets)-1
+        self.splitter = splitter
 
         if output_dir is None:
             self.path_results = Path(output_dir) / \
@@ -129,6 +130,9 @@ class CompareSplittersEstimates:
         df_clustering_parameters = pd.read_csv(configs.compare_splitters__path_clustering_parameters)
 
         for splitter_name, splitter_class, splitter_params in configs.splitter_methods:
+            if self.splitter and splitter_name != self.splitter:
+                continue
+            
             print("-- Running {}".format(splitter_name))
 
             repeat_splitter = StratifiedShuffleSplit(
@@ -137,69 +141,75 @@ class CompareSplittersEstimates:
                 random_state=configs.compare_splitters__repeats_random_state)
             
             for repeat_id, (indices_r, _) in enumerate(repeat_splitter.split(X, y)):
-                print("---- Repeat [{}/{}]".format(
-                    repeat_id + 1, configs.compare_splitters__n_repeats))
-                X_r, y_r = X[indices_r, :], y[indices_r]
+                try:
+                    print("---- Repeat [{}/{}]".format(
+                        repeat_id + 1, configs.compare_splitters__n_repeats))
+                    X_r, y_r = X[indices_r, :], y[indices_r]
 
-                for n_splits in configs.compare_splitters__n_splits:
-                    splitter_params['n_splits'] = n_splits
+                    for n_splits in configs.compare_splitters__n_splits:
+                        splitter_params['n_splits'] = n_splits
 
-                    if splitter_name in configs.need_n_clusters:
-                        n_clusters = round(df_clustering_parameters.loc[
-                            df_clustering_parameters['ds_name'] == ds_name, 'n_clusters_estimate'].values[0])
-                        print("---- Using {} clusters".format(n_clusters))
+                        if splitter_name in configs.need_n_clusters:
+                            n_clusters = round(df_clustering_parameters.loc[
+                                df_clustering_parameters['ds_name'] == ds_name, 'n_clusters_estimate'].values[0])
+                            print("---- Using {} clusters".format(n_clusters))
 
-                        splitter_params['n_clusters'] = n_clusters
-                    
-                    if 'DBSCAN' in splitter_name:
-                        eps = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'eps'].values[0]
-                        min_samples = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'min_samples'].values[0]
-                        print("---- Using eps={} min_samples={}".format(eps, min_samples))
+                            splitter_params['n_clusters'] = n_clusters
+                        
+                        if 'DBSCAN' in splitter_name:
+                            eps = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'eps'].values[0]
+                            min_samples = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'min_samples'].values[0]
+                            print("---- Using eps={} min_samples={}".format(eps, min_samples))
 
-                        splitter_params['eps'] = eps
-                        splitter_params['min_samples'] = min_samples
+                            splitter_params['eps'] = eps
+                            splitter_params['min_samples'] = min_samples
 
-                    split_start = time.perf_counter()
-                    splitter = splitter_class(**splitter_params)
-                    splits = [(split_id, train, test) \
-                            for split_id, (train, test) in enumerate(splitter.split(X_r, y_r))]
-                            
-                    split_execution_time = time.perf_counter() - split_start
+                        split_start = time.perf_counter()
+                        splitter = splitter_class(**splitter_params)
+                        splits = [(split_id, train, test) \
+                                for split_id, (train, test) in enumerate(splitter.split(X_r, y_r))]
+                                
+                        split_execution_time = time.perf_counter() - split_start
 
-                    self.results.insert_splitter_running_time(
-                        ds_name, clf_name, splitter_name, repeat_id, n_splits, splitter, split_execution_time)
+                        self.results.insert_splitter_running_time(
+                            ds_name, clf_name, splitter_name, repeat_id, n_splits, splitter, split_execution_time)
 
-                    for split_id, train, test in splits:
-                        clf = load_best_classifier_for_dataset(ds_name, clf_name)
-                        clf.fit(X_r[train], y_r[train])
-                        y_pred = clf.predict(X_r[test])
+                        for split_id, train, test in splits:
+                            clf = load_best_classifier_for_dataset(ds_name, clf_name)
+                            clf.fit(X_r[train], y_r[train])
+                            y_pred = clf.predict(X_r[test])
 
-                        metric_results = self._compute_metrics(y_r[test], y_pred)
+                            metric_results = self._compute_metrics(y_r[test], y_pred)
 
-                        self.results.insert_dataset_split(
-                            ds_name, clf_name, splitter_name, repeat_id, n_splits, split_id, indices_r, train, test)
-                        # self.results.insert_classifier(
-                        #     ds_name, clf_name, splitter_name, repeat_id, split_id, clf)
-                        self.results.insert_metric_results(
-                            ds_name, clf_name, splitter_name, repeat_id, n_splits, split_id, metric_results)
+                            self.results.insert_dataset_split(
+                                ds_name, clf_name, splitter_name, repeat_id, n_splits, split_id, indices_r, train, test)
+                            # self.results.insert_classifier(
+                            #     ds_name, clf_name, splitter_name, repeat_id, split_id, clf)
+                            self.results.insert_metric_results(
+                                ds_name, clf_name, splitter_name, repeat_id, n_splits, split_id, metric_results)
+                except Exception as e:
+                    exception_str = f"'Exception while executing {splitter_name} on {ds_name} with {clf_name}: {e}\n"
+                    print(exception_str)
+                    with open('exceptions.txt', 'a') as file:
+                        file.write(exception_str)
 
     def compare_splitters_estimates(self):
         for ds_idx, ds_name in enumerate(configs.datasets):
             if self.ds_idx_0 <= ds_idx <= self.ds_idx_last:
                 for params in configs.pipeline_params:
                     clf_class_name = params['clf'][0].__class__.__name__
-                    print("Estimating metrics for {} with {}.".format(ds_name, clf_class_name))
+                    print(f"Estimating metrics for {ds_name} with {clf_class_name}.")
 
                     self._compare_splitters(ds_name, clf_class_name)
 
                 joblib.dump(self.results, self.path_results)
 
 
-def run_compare_splitters_estimates(output_dir, idx_first, idx_last):
-    print("Running datasets %d to %d" % (idx_first, idx_last))
+def run_compare_splitters_estimates(output_dir, idx_first, idx_last, splitter):
+    print(f"Running datasets {idx_first} to {idx_last}")
     CompareSplittersEstimates(
-        output_dir=output_dir, ds_idx_0=idx_first, ds_idx_last=idx_last).compare_splitters_estimates()
-    print("Finished datasets %d to %d" % (idx_first, idx_last))
+        output_dir=output_dir, ds_idx_0=idx_first, ds_idx_last=idx_last, splitter=splitter).compare_splitters_estimates()
+    print(f"Finished datasets {idx_first} to {idx_last}")
 
 
 def analyze(args):
@@ -247,12 +257,16 @@ def analyze(args):
     
     if make_plots:
         sns.set_theme()
-        df = pd.read_csv(path_run / 'bias_variance_tradeoff.csv')
-        df = df[~df['splitter_method'].str.contains('Shuffle')]
-        output_dir = path_run / 'plots'
-        output_dir.mkdir(exist_ok=True, parents=True)
+        df_base = pd.read_csv(path_run / 'bias_variance_tradeoff.csv')
+        df_base = df_base[~df_base['splitter_method'].str.contains('Shuffle')]
+    
+        for experiment, datasets in configs.experiments.items():
+            df = df_base[df_base['splitter_method'].isin(datasets)]
 
-        utils._compare_plot_balance(df, output_dir)
+            output_dir = path_run / f'plots/{experiment}'
+            output_dir.mkdir(exist_ok=True, parents=True)
+
+            utils._compare_plot_balance(df, output_dir)
 
     if make_tests:
         statistical_tests.analyze()
@@ -287,6 +301,11 @@ def main(args):
         select_df_results(args)
         return
 
+    if args.name:
+        splitter = args.name
+    else:
+        splitter = ''
+
     output_dir = Path(configs.compare_splitters__output)
     output_dir.mkdir(exist_ok=True, parents=True)
     n_datasets = len(configs.datasets)
@@ -294,5 +313,5 @@ def main(args):
 
     joblib.Parallel(n_jobs=configs.compare_splitters__n_jobs)(
         joblib.delayed(run_compare_splitters_estimates)(
-            output_dir, i, min(i+step-1, n_datasets-1)) for i in range(0, n_datasets, step)
+            output_dir, i, min(i+step-1, n_datasets-1), splitter) for i in range(0, n_datasets, step)
     )

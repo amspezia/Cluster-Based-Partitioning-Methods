@@ -12,7 +12,10 @@ def build_compare_splitters_subparser(subparsers):
 
     parser_experiment.add_argument(
         "-s", "--select", action="store_true", help="Select tables from run results.")
-
+    
+    parser_experiment.add_argument(
+        "-n", "--name", type=str, help="Name of a specific splitter to compare.")
+    
     return parser_experiment
 
 
