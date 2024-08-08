@@ -2,6 +2,7 @@ from datetime import datetime
 from itertools import combinations, product
 from pathlib import Path
 import joblib
+import os
 import numpy as np
 import pandas as pd
 from pmlb import fetch_data
@@ -133,7 +134,7 @@ class CompareSplittersEstimates:
             if self.splitter and splitter_name != self.splitter:
                 continue
             
-            print("-- Running {}".format(splitter_name))
+            print(f"{os.getpid()}: -- Running {splitter_name}")
 
             repeat_splitter = StratifiedShuffleSplit(
                 n_splits=configs.compare_splitters__n_repeats, 
@@ -142,8 +143,7 @@ class CompareSplittersEstimates:
             
             for repeat_id, (indices_r, _) in enumerate(repeat_splitter.split(X, y)):
                 try:
-                    print("---- Repeat [{}/{}]".format(
-                        repeat_id + 1, configs.compare_splitters__n_repeats))
+                    print(f"{os.getpid()}: ---- Repeat [{repeat_id + 1}/{configs.compare_splitters__n_repeats}]")
                     X_r, y_r = X[indices_r, :], y[indices_r]
 
                     for n_splits in configs.compare_splitters__n_splits:
@@ -152,14 +152,14 @@ class CompareSplittersEstimates:
                         if splitter_name in configs.need_n_clusters:
                             n_clusters = round(df_clustering_parameters.loc[
                                 df_clustering_parameters['ds_name'] == ds_name, 'n_clusters_estimate'].values[0])
-                            print("---- Using {} clusters".format(n_clusters))
+                            print(f"{os.getpid()}: ---- Using {n_clusters} clusters")
 
                             splitter_params['n_clusters'] = n_clusters
                         
                         if 'DBSCAN' in splitter_name:
                             eps = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'eps'].values[0]
                             min_samples = df_clustering_parameters.loc[df_clustering_parameters['ds_name'] == ds_name, 'min_samples'].values[0]
-                            print("---- Using eps={} min_samples={}".format(eps, min_samples))
+                            print(f"{os.getpid()}: ---- Using eps={eps} min_samples={min_samples}")
 
                             splitter_params['eps'] = eps
                             splitter_params['min_samples'] = min_samples
@@ -188,7 +188,7 @@ class CompareSplittersEstimates:
                             self.results.insert_metric_results(
                                 ds_name, clf_name, splitter_name, repeat_id, n_splits, split_id, metric_results)
                 except Exception as e:
-                    exception_str = f"'Exception while executing {splitter_name} on {ds_name} with {clf_name}: {e}\n"
+                    exception_str = f"Exception while executing {splitter_name} on {ds_name} with {clf_name}: {e}\n"
                     print(exception_str)
                     with open('exceptions.txt', 'a') as file:
                         file.write(exception_str)
@@ -198,7 +198,7 @@ class CompareSplittersEstimates:
             if self.ds_idx_0 <= ds_idx <= self.ds_idx_last:
                 for params in configs.pipeline_params:
                     clf_class_name = params['clf'][0].__class__.__name__
-                    print(f"Estimating metrics for {ds_name} with {clf_class_name}.")
+                    print(f"{os.getpid()}: Estimating metrics for {ds_name} with {clf_class_name}.")
 
                     self._compare_splitters(ds_name, clf_class_name)
 
@@ -206,10 +206,10 @@ class CompareSplittersEstimates:
 
 
 def run_compare_splitters_estimates(output_dir, idx_first, idx_last, splitter):
-    print(f"Running datasets {idx_first} to {idx_last}")
+    print(f"{os.getpid()}: Running datasets {idx_first} to {idx_last}")
     CompareSplittersEstimates(
         output_dir=output_dir, ds_idx_0=idx_first, ds_idx_last=idx_last, splitter=splitter).compare_splitters_estimates()
-    print(f"Finished datasets {idx_first} to {idx_last}")
+    print(f"{os.getpid()}: Finished datasets {idx_first} to {idx_last}")
 
 
 def analyze(args):
