@@ -3,8 +3,9 @@ from pathlib import Path
 from typing import Union
 import pandas as pd
 import numpy as np
+import os
 from scipy import stats
-from .configs import need_n_clusters
+from .configs import need_n_clusters, cluster_based
 
 from kfoldmethods.experiments import utils
 from kfoldmethods.experiments import configs
@@ -59,37 +60,44 @@ def apply_tests_by__balance(df: pd.DataFrame, metrics, n_splits_list, ds_balance
     records_friedman = []
     df_wins = pd.DataFrame()
 
-    for metric, n_splits, ds_balance in product(metrics, n_splits_list, ds_balances):
-        ds_list = configs.datasets_balanced if ds_balance == 'balanced' else configs.datasets_imb
+    for experiment, splitters in configs.experiments.items():
+        path_statistical_experiment = path_statistical_tests / experiment
+        path_wins_experiment = path_wins / experiment
+        os.makedirs(path_statistical_experiment, exist_ok=True)
+        os.makedirs(path_wins_experiment, exist_ok=True)
 
-        df_group = df[
-            (df['metric_name'] == metric) & \
-            (df['n_splits'] == n_splits) & \
-            (df['dataset_name'].isin(ds_list))]
+        for metric, n_splits, ds_balance in product(metrics, n_splits_list, ds_balances):
+            
+            ds_list = configs.datasets_balanced if ds_balance == 'balanced' else configs.datasets_imb
 
-        splitters, biases, stds = utils._make_samples_for_tests(df_group)
-        if len(biases) > 2:
-            p_bias, p_std = test_splitters_friedman(biases, stds)
-            records_friedman.append(
-                {'metric': metric, 'n_splits': n_splits, 'balance': ds_balance, 'p_bias': p_bias, 'p_std': p_std})
+            df_group = df[
+                (df['metric_name'] == metric) & \
+                (df['n_splits'] == n_splits) & \
+                (df['dataset_name'].isin(ds_list))]
 
-        pairs_bias, pairs_std = test_splitter_pairs(splitters, biases, stds)
-        pairs_bias.to_csv(
-            path_statistical_tests / 'wc_bias_{}_{}_{}.csv'.format(metric, n_splits, ds_balance), 
-            float_format="%.5f")
-        pairs_std.to_csv(
-            path_statistical_tests / 'wc_std_{}_{}_{}.csv'.format(metric, n_splits, ds_balance), 
-            float_format="%.5f")
+            splitters, biases, stds = utils._make_samples_for_tests(df_group, splitters)
+            if len(biases) > 2:
+                p_bias, p_std = test_splitters_friedman(biases, stds)
+                records_friedman.append(
+                    {'metric': metric, 'n_splits': n_splits, 'balance': ds_balance, 'p_bias': p_bias, 'p_std': p_std})
 
-        wins_bias = count_winners(splitters, biases)
-        wins_std = count_winners(splitters, stds)
-        indexes = pd.MultiIndex.from_product([(metric, ), (n_splits, ), (ds_balance, ), ('bias', 'std')])
-        df_wins_group = pd.DataFrame.from_records([wins_bias, wins_std], index=indexes)
-        df_wins = pd.concat((df_wins, df_wins_group), axis=0)
+            pairs_bias, pairs_std = test_splitter_pairs(splitters, biases, stds)
+            pairs_bias.to_csv(
+                path_statistical_experiment / 'wc_bias_{}_{}_{}.csv'.format(metric, n_splits, ds_balance), 
+                float_format="%.5f")
+            pairs_std.to_csv(
+                path_statistical_experiment / 'wc_std_{}_{}_{}.csv'.format(metric, n_splits, ds_balance), 
+                float_format="%.5f")
 
-    df_wins.to_csv(path_wins / 'wins_by_balance.csv')
-    df_fr = pd.DataFrame.from_records(records_friedman)
-    df_fr.to_csv(path_statistical_tests / 'fr_by_balance.csv', float_format="%.5f")
+            wins_bias = count_winners(splitters, biases)
+            wins_std = count_winners(splitters, stds)
+            indexes = pd.MultiIndex.from_product([(metric, ), (n_splits, ), (ds_balance, ), ('bias', 'std')])
+            df_wins_group = pd.DataFrame.from_records([wins_bias, wins_std], index=indexes)
+            df_wins = pd.concat((df_wins, df_wins_group), axis=0)
+
+        df_wins.to_csv(path_wins_experiment / 'wins_by_balance.csv')
+        df_fr = pd.DataFrame.from_records(records_friedman)
+        df_fr.to_csv(path_statistical_experiment / 'fr_by_balance.csv', float_format="%.5f")
 
 
 def apply_tests_overall(df: pd.DataFrame, metrics, n_splits_list, subdir: Union[None, Path] = None):
@@ -174,11 +182,12 @@ def apply_tests_by__clf(df: pd.DataFrame, metrics, n_splits_list, classifiers):
 
 def cluster_based_only():
     df = pd.read_csv(path_run / 'bias_variance_tradeoff.csv')
-    df = df[df['splitter_method'].str.contains('|'.join(need_n_clusters))]
-    metrics = ['accuracy', 'f1']
-    n_splits_list = [2, 5, 10]  
+    for experiment, splitters in configs.experiments.items():
+        df = df[df['splitter_method'].str.contains('|'.join(splitters))]
+        metrics = ['accuracy', 'f1']
+        n_splits_list = [2, 10]  
 
-    apply_tests_overall(df, metrics=metrics, n_splits_list=n_splits_list, subdir=Path('cluster_based'))
+        apply_tests_overall(df, metrics=metrics, n_splits_list=n_splits_list, subdir=Path(f'{experiment}'))
 
 
 def analyze():
@@ -189,8 +198,8 @@ def analyze():
     df = pd.read_csv(path_run / 'bias_variance_tradeoff.csv')
     df = df[~df['splitter_method'].str.contains('Shuffle')]
     metrics = ['accuracy', 'f1', 'recall', 'precision', 'balanced_accuracy']
-    n_splits_list = [2, 5, 10]
+    n_splits_list = [2, 10]
     ds_balances = ['balanced', 'imbalanced']
 
-    #apply_tests_by__balance(df, metrics, n_splits_list, ds_balances)
-    #cluster_based_only()
+    apply_tests_by__balance(df, metrics, n_splits_list, ds_balances)
+    cluster_based_only()

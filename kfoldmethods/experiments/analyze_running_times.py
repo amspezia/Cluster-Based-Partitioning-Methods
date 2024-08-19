@@ -39,42 +39,6 @@ def savefig(fig, basename, output_dir: Path):
     fig.savefig(pdf_dir / "{}.pdf".format(basename))
 
 
-def winners_running_time():
-    df_rt = get_df_rt_10folds()
-    """ TO BE REDONE
-    df_rt.drop(inplace=True, columns=['KFold', 'StratifiedKFold'])
-    print(df_rt)
-    a = np.argmin(df_rt.to_numpy(), axis=1)
-    print(np.bincount(a))
-    datasets = np.array(configs.datasets)
-    print(datasets[a == 1])
-
-    df_rt.drop(inplace=True, columns=['DBSCV', 'DOBSCV'])
-    print(df_rt)
-    a = np.argmin(df_rt.to_numpy(), axis=1)
-    print(np.bincount(a))
-    """
-
-def cluster_based__how_many_times_faster():
-    df_rt = get_df_rt_10folds()
-    """ TO BE REDONE
-    df_rt.drop(inplace=True, columns=['KFold', 'StratifiedKFold'])
-    df_rt.drop(inplace=True, columns=['DBSCV', 'DOBSCV', 'SPECTRAL'])
-    
-    df_CBDSCV = df_rt.drop(columns=['SCBDSCV', 'SCBDSCV_Mini'])
-    ratio_CBDSCV = df_CBDSCV['CBDSCV'] / df_CBDSCV['CBDSCV_Mini']
-
-    print("CBDSCV vs CBDSCV_Mini running times")
-    print(ratio_CBDSCV)
-    print("Mean CBDSCV: {:.4f}".format(np.mean(ratio_CBDSCV)))
-
-    df_SCBDSCV = df_rt#.drop(columns=['CBDSCV', 'CBDSCV_Mini'])
-    ratio_SCBDSCV = df_SCBDSCV['SCBDSCV'] / df_SCBDSCV['SCBDSCV_Mini']
-
-    print("SCBDSCV vs SCBDSCV_Mini running times")
-    print(ratio_SCBDSCV)
-    print("Mean SCBDSCV: {:.4f}".format(np.mean(ratio_SCBDSCV)))
-    """
 
 
 def plot_rt_distribution():
@@ -95,6 +59,4 @@ def plot_rt_distribution():
 def analyze():
     if not path_rt_artifacts.exists():
         path_rt_artifacts.mkdir(exist_ok=True, parents=True)
-    cluster_based__how_many_times_faster()
     plot_rt_distribution()
-    winners_running_time()

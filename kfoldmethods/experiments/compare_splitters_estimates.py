@@ -11,6 +11,7 @@ import seaborn as sns
 from scipy import stats
 from sklearn.metrics import accuracy_score, balanced_accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
 from sklearn.model_selection import RepeatedStratifiedKFold, StratifiedShuffleSplit
+from multiprocessing import Pool
 
 from kfoldmethods.experiments import analyze_running_times, configs, statistical_tests
 from kfoldmethods.experiments import utils
@@ -95,7 +96,16 @@ class CompareSplittersEstimatesResults:
         if not return_splitter_obj:
             df = df.drop(columns=['splitter_object'])
         return df
-
+    
+    def extend(self, other):
+        # Extend the current object's record
+        if isinstance(other, CompareSplittersEstimatesResults):
+            self.records_splits.extend(other.records_splits)
+            self.records_classifiers.extend(other.records_classifiers)
+            self.records_metrics.extend(other.records_metrics)
+            self.records_splitters_running_time.extend(other.records_splitters_running_time)
+        else:
+            raise TypeError("Expected an instance of CompareSplittersEstimatesResults")
 
 class CompareSplittersEstimates:
     def __init__(self, output_dir=None, ds_idx_0=None, ds_idx_last=None, splitter=''):
@@ -129,7 +139,9 @@ class CompareSplittersEstimates:
     def _compare_splitters(self, ds_name, clf_name):
         X, y = fetch_data(ds_name, return_X_y=True)
         df_clustering_parameters = pd.read_csv(configs.compare_splitters__path_clustering_parameters)
-
+        
+        print(f"{os.getpid()}: Estimating metrics for {ds_name} with {clf_name}.")
+        
         for splitter_name, splitter_class, splitter_params in configs.splitter_methods:
             if self.splitter and splitter_name != self.splitter:
                 continue
@@ -141,8 +153,9 @@ class CompareSplittersEstimates:
                 test_size=configs.compare_splitters__repeat_test_size,
                 random_state=configs.compare_splitters__repeats_random_state)
             
-            for repeat_id, (indices_r, _) in enumerate(repeat_splitter.split(X, y)):
+            def parallel_processing(repeat_id, indices_r):
                 try:
+                    results = CompareSplittersEstimatesResults()
                     print(f"{os.getpid()}: ---- Repeat [{repeat_id + 1}/{configs.compare_splitters__n_repeats}]")
                     X_r, y_r = X[indices_r, :], y[indices_r]
 
@@ -171,7 +184,7 @@ class CompareSplittersEstimates:
                                 
                         split_execution_time = time.perf_counter() - split_start
 
-                        self.results.insert_splitter_running_time(
+                        results.insert_splitter_running_time(
                             ds_name, clf_name, splitter_name, repeat_id, n_splits, splitter, split_execution_time)
 
                         for split_id, train, test in splits:
@@ -181,17 +194,24 @@ class CompareSplittersEstimates:
 
                             metric_results = self._compute_metrics(y_r[test], y_pred)
 
-                            self.results.insert_dataset_split(
+                            results.insert_dataset_split(
                                 ds_name, clf_name, splitter_name, repeat_id, n_splits, split_id, indices_r, train, test)
                             # self.results.insert_classifier(
                             #     ds_name, clf_name, splitter_name, repeat_id, split_id, clf)
-                            self.results.insert_metric_results(
+                            results.insert_metric_results(
                                 ds_name, clf_name, splitter_name, repeat_id, n_splits, split_id, metric_results)
+                            
+                    return results
                 except Exception as e:
                     exception_str = f"Exception while executing {splitter_name} on {ds_name} with {clf_name}: {e}\n"
-                    print(exception_str)
-                    with open('exceptions.txt', 'a') as file:
-                        file.write(exception_str)
+                
+            results = joblib.Parallel(n_jobs=-1)(
+                joblib.delayed(parallel_processing)(
+                    repeat_id, indices_r) for repeat_id, (indices_r, _) in enumerate(repeat_splitter.split(X, y))
+            )     
+
+            for result in results:
+                self.results.extend(result)
 
     def compare_splitters_estimates(self):
         for ds_idx, ds_name in enumerate(configs.datasets):
@@ -311,7 +331,5 @@ def main(args):
     n_datasets = len(configs.datasets)
     step = 1
 
-    joblib.Parallel(n_jobs=configs.compare_splitters__n_jobs)(
-        joblib.delayed(run_compare_splitters_estimates)(
-            output_dir, i, min(i+step-1, n_datasets-1), splitter) for i in range(0, n_datasets, step)
-    )
+    for i in range(0, n_datasets, step):
+        run_compare_splitters_estimates(output_dir, i, min(i+step-1, n_datasets-1), splitter)

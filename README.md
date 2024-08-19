@@ -2,7 +2,7 @@
 
 ## Using the Splitters
 The code for the splitters are in `kfoldmethods/splitters` and the can be used in the same way as one would use sklearn splitters.
-The available methods are DBSCV, DOBSCV, CBDSCV and CBDSCV using Minibatch k-means.
+The available methods are DBSCV, DOBSCV, CBCV and CBCV using Minibatch k-means.
 Simply copy the folder to your project to use them.
 
 ## Selected Hyperparameters 
