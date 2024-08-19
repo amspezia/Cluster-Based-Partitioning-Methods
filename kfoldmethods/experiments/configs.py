@@ -7,7 +7,7 @@ from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 
 from kfoldmethods.datasets.pmlb_api import pmlb_get_ds_list
-from kfoldmethods.splitters import CBDSCV, SCBDSCV, DBSVC, DOBSCV, SPECTRAL, ACBCV, DBSCANBCV, ROCBCV
+from kfoldmethods.splitters import CBCV, SCBCV, DBSVC, DOBSCV, SPECTRAL, ACBCV, DBSCANBCV, ROCBCV
 
 
 run_data_dir = 'results_bracis22'
@@ -28,28 +28,10 @@ pipeline_params = [
 ]
 
 n_jobs = -1
-tuning_folds = 10
+tuning_folds = 5
 tuning_grid_seach_n_jobs = n_jobs
 tuning_grid_search_scoring = 'balanced_accuracy'
 classifier_hyperparameters_output = "%s/classifier_hyperparameters" % run_data_dir
-
-"""
-Old datasets
-
-datasets = [
-    'analcatdata_germangss', 'chess', 'analcatdata_happiness', 'analcatdata_japansolvent', 'vote', 'colic', 'dna',
-    'vowel', 'movement_libras', 'analcatdata_dmft', 'allrep', 'appendicitis', 'page_blocks', 
-    'new_thyroid', 'backache', 'flare', 'postoperative_patient_data',
-    'hepatitis', 'analcatdata_cyyoung8092', 'car']
-
-datasets_balanced = [
-    'analcatdata_germangss', 'chess',  'analcatdata_happiness', 'analcatdata_japansolvent', 'vote', 'colic', 'dna',
-    'vowel', 'movement_libras', 'analcatdata_dmft']
-
-datasets_imb = [
-    'allrep', 'appendicitis', 'page_blocks', 'new_thyroid', 'backache', 'flare', 'postoperative_patient_data',
-    'hepatitis', 'analcatdata_cyyoung8092', 'car']
-"""
 
 datasets = ['cloud', 'iris', 'analcatdata_germangss', 'movement_libras', 'sonar', 'vowel', 'contraceptive', 'splice', 'waveform_21', 'optdigits',
             'analcatdata_cyyoung9302', 'appendicitis', 'backache', 'haberman', 'new_thyroid', 'wine_quality_red', 'allrep',  'dis', 'churn', 'ann_thyroid']
@@ -86,35 +68,43 @@ splitter_methods = [
 #        'shuffle': True, 'bad_case': False, 'random_state': 123}),
 #    ('DOBSCV', DOBSCV.DOBSCVSplitter, {
 #        'shuffle': True, 'bad_case': False, 'random_state': 123}),
-#    ('CBDSCV', CBDSCV.CBDSCVSplitter, {
-#        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
-#    ('CBDSCV_Mini', CBDSCV.CBDSCVSplitter, {
-#        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
-#    ('SCBDSCV', SCBDSCV.SCBDSCVSplitter, {
-#        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
-#    ('SCBDSCV_Mini', SCBDSCV.SCBDSCVSplitter, {
-#        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
-    ('SPECTRAL_kmeans', SPECTRAL.SPECTRALSplitter, {
-        'shuffle': True, 'assign_labels': 'kmeans', 'random_state': 123}),
-    ('SPECTRAL_clusterqr', SPECTRAL.SPECTRALSplitter, {
-        'shuffle': True, 'assign_labels': 'cluster_qr', 'random_state': 123}),
-#    ('ACBCV', ACBCV.ACBCVSplitter, {
-#        'shuffle': True, 'random_state': 123}),
-#    ('DBSCANBCV', DBSCANBCV.DBSCANBCVSplitter, {
-#        'shuffle': True, 'random_state': 123}),
+    ('CBCV', CBCV.CBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
+    ('CBCV_Mini', CBCV.CBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
+    ('SCBCV', SCBCV.SCBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False}),
+    ('SCBCV_Mini', SCBCV.SCBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': True}),
+    ('SCBCV2', SCBCV.SCBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False, 'n_clusters': 2}),
+    ('SCBCV3', SCBCV.SCBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False, 'n_clusters': 3}),
+    ('SCBCV4', SCBCV.SCBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False, 'n_clusters': 4}),
+    ('SCBCV5', SCBCV.SCBCVSplitter, {
+        'shuffle': True, 'random_state': 123, 'minibatch_kmeans': False, 'n_clusters': 5}),
+#    ('SPECTRAL_kmeans', SPECTRAL.SPECTRALSplitter, {
+#        'shuffle': True, 'assign_labels': 'kmeans', 'random_state': 123}),
+#    ('SPECTRAL_clusterqr', SPECTRAL.SPECTRALSplitter, {
+#        'shuffle': True, 'assign_labels': 'cluster_qr', 'random_state': 123}),
+    ('ACBCV', ACBCV.ACBCVSplitter, {
+        'shuffle': True, 'random_state': 123}),
+    ('DBSCANBCV', DBSCANBCV.DBSCANBCVSplitter, {
+        'shuffle': True, 'random_state': 123}),
 #    ('ROCBCV', ROCBCV.ROCBCVSplitter, {
 #        'shuffle': True, 'random_state': 123}),
-#    ('StratifiedKFold', StratifiedKFold, {
-#        'shuffle': True, 'random_state': 123}),
+    ('StratifiedKFold', StratifiedKFold, {
+        'shuffle': True, 'random_state': 123})
 #    ('KFold', KFold, {
 #        'shuffle': True, 'random_state': 123})
 ]
 
 experiments = {
-    'experiment_0': ['SPECTRAL_kmeans', 'SPECTRAL_clusterqr']
-    #'experiment_1': ['StratifiedKFold', 'SCBDSCV', 'SCBDSCV_Mini', 'CBDSCV', 'CBDSCV_Mini'],
-    #'experiment_2': ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'ACBCV', 'DBSCANBCV'],
-    #'experiment_3': ['CBDSCV', 'SCBDSCV', 'ROCBCV']
+    'experiment_1': ['SCBCV', 'SCBCV2', 'SCBCV3', 'SCBCV4', 'SCBCV5'],
+    'experiment_2': ['StratifiedKFold', 'SCBCV', 'SCBCV_Mini'],
+    'experiment_3': ['SCBCV', 'SCBCV_Mini', 'CBCV', 'CBCV_Mini', 'ACBCV', 'DBSCANBCV']
 }
 
-need_n_clusters = ['CBDSCV', 'CBDSCV_Mini', 'SCBDSCV', 'SCBDSCV_Mini', 'SPECTRAL_kmeans', 'SPECTRAL_clusterqr', 'ACBCV']
+cluster_based = ['CBCV', 'CBCV_Mini', 'SCBCV', 'SCBCV_Mini', 'DBSCANBCV', 'ACBCV']
+need_n_clusters = ['CBCV', 'CBCV_Mini', 'SCBCV', 'SCBCV_Mini', 'SPECTRAL_kmeans', 'SPECTRAL_clusterqr', 'ACBCV']

@@ -102,13 +102,13 @@ def _plot_distributions(df_group, output_dir: Path, g_name: str, measure: str, b
     output_path_pdf.parent.mkdir(exist_ok=True, parents=True)
 
     fig, ax = plt.subplots()
-    if colored_by is None:
-        sns.boxplot(data=df_group, y='splitter_method', x=measure, ax=ax, whis=20.0)
+    if not colored_by:
+        sns.boxplot(data=df_group, y='splitter_method', x=measure, ax=ax, whis=20.0, hue='splitter_method')
     else:
         sns.stripplot(data=df_group, y='splitter_method', x=measure, ax=ax, hue=colored_by)
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-    ax.set_ylabel('Splitter')
+    ax.set_ylabel('Técnica')
     fig.tight_layout()
     fig.savefig(output_path_jpg)
     fig.savefig(output_path_pdf)
@@ -197,16 +197,17 @@ def _compare_plot_std_balance(df, output_dir):
         plt.close(fig)
 
 
-def _make_samples_for_tests(df):
+def _make_samples_for_tests(df, splitters = []):
     bias_list = []
     std_list = []
     splitters_list = []
     for splitter, df_splitter in df.groupby('splitter_method'):
-        bias = df_splitter['bias']
-        estimate_std = df_splitter['estimate_std']
-        
-        splitters_list.append(splitter)
-        bias_list.append(bias)
-        std_list.append(estimate_std)
+        if not splitters or splitter in splitters:
+            bias = df_splitter['bias']
+            estimate_std = df_splitter['estimate_std']
+            
+            splitters_list.append(splitter)
+            bias_list.append(bias)
+            std_list.append(estimate_std)
     
     return splitters_list, bias_list, std_list

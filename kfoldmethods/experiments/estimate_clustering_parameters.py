@@ -8,8 +8,7 @@ import time
 import matplotlib.pyplot as plt
 
 from kfoldmethods.experiments import configs
-from kfoldmethods.experiments.utils import estimate_n_clusters
-from kneebow.rotor import Rotor
+from kfoldmethods.experiments.utils import estimate_n_clusters 
 from sklearn.neighbors import NearestNeighbors
 from kneed import KneeLocator
 
@@ -85,8 +84,8 @@ class ClusteringParametersEstimate:
     def estimate_clustering_parameters_dataset(self, ds_name):
         X, y = fetch_data(ds_name, return_X_y=True)
         
-        min_samples = max(2, X.shape[1] * 2 - 1) 
-        eps = find_suitable_eps(X, min_samples, ds_name)
+        min_samples = X.shape[1] * 2 
+        eps = find_suitable_eps(X, min_samples - 1, ds_name)
         print(f"Estimated parameters of DBSCAN for dataset {ds_name}: eps={eps} min_samples={min_samples}")
 
         sample_size = min(100, X.shape[0] - 1)
